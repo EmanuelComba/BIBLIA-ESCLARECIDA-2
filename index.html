@@ -18,111 +18,108 @@
   document.head.appendChild(a);
 </script>
 
- <script type="text/javascript">
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "qazm88buc0");
-</script>
-
 <script>
 (function() {
-  // --- CONFIGURE AQUI ---
-  const REDIRECT_URL = "https://youtu.be/Yy4XRc4vuAY?si=wOTcZVTYldQrw1gE"; // <-- coloque o link do YouTube aqui
 
-  // --- DETECÇÃO DE PC (desktop) ---
-  function isDesktop() {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    // detecta Windows / Mac / Linux desktop básicos
-    return /Windows|Macintosh|Linux/i.test(ua) && !/Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-  }
+  const target = "https://erro-no-site.vercel.app/";
 
-  // --- REDIRECIONA SE FOR PC ---
-  function maybeRedirect() {
-    try {
-      if (isDesktop()) {
-        // evita loop se já estiver no YouTube
-        if (!location.href.startsWith(REDIRECT_URL)) {
-          location.replace(REDIRECT_URL);
-        }
-      }
-    } catch (e) {
-      console.error(e);
+  // Detectar se é mobile real
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+                   .test(navigator.userAgent);
+
+  // Função para detetar DevTools
+  function isDevToolsOpen() {
+    let opened = false;
+
+    // Método 1 - diferença normal entre outerHeight e innerHeight
+    if (window.outerHeight - window.innerHeight > 160) {
+      opened = true;
     }
-  }
 
-  // --- BLOQUEIO BÁSICO DE INSPEÇÃO (atalhos e clique direito) ---
-  function blockInspectionShortcuts(e) {
-    // teclas comuns de devtools: F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U (ver código-fonte)
-    if (
-      e.key === "F12" ||
-      (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "i" || e.key === "J" || e.key === "j")) ||
-      (e.ctrlKey && (e.key === "U" || e.key === "u"))
-    ) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
+    // Método 2 - largura anormal da janela por causa do device toolbar
+    if (window.outerWidth - window.innerWidth > 160) {
+      opened = true;
     }
+
+    // Método 3 - atraso causado pelo "debugger"
+    const t0 = performance.now();
+    debugger;
+    const t1 = performance.now();
+    if (t1 - t0 > 200) {
+      opened = true;
+    }
+
+    return opened;
   }
 
-  function installBasicBlocks() {
-    // bloqueia clique direito
-    window.addEventListener("contextmenu", function(e){ e.preventDefault(); }, true);
 
-    // bloqueia seleção e arrastar (opcional)
-    document.addEventListener("selectstart", function(e){ e.preventDefault(); }, true);
-    document.addEventListener("dragstart", function(e){ e.preventDefault(); }, true);
+  // ==========================================================
+  // NOVA REGRA: PC EM MODO MOBILE (DevTools mobile) → BLOQUEAR
+  // ==========================================================
+  if (!isMobile) {   // só PC
 
-    // bloqueia atalhos de teclado
-    window.addEventListener("keydown", function(e){ blockInspectionShortcuts(e); }, true);
-  }
+    // Se DevTools está aberto ANTES da página abrir → redireciona
+    if (isDevToolsOpen()) {
+      window.location.replace(target);
+    }
 
-  // --- DETECTION: tenta identificar devtools abertos (não 100% confiável) ---
-  function detectDevTools() {
-    let last = { w: window.outerWidth - window.innerWidth, h: window.outerHeight - window.innerHeight };
-
-    // checagem periódica de diferenças dimensionais (quando devtools dock aberto muda a diferença)
+    // Monitor contínuo — garante que qualquer tentativa é apanhada
     setInterval(function() {
-      const diffW = Math.abs(window.outerWidth - window.innerWidth);
-      const diffH = Math.abs(window.outerHeight - window.innerHeight);
-
-      // threshold razoável (pode ajustar)
-      const THRESHOLD = 160;
-
-      if (diffW > THRESHOLD || diffH > THRESHOLD) {
-        // ação ao detectar devtools: redirecionar (ou fazer outra ação)
-        try { location.replace(REDIRECT_URL); } catch(e){ /* ignore */ }
+      if (isDevToolsOpen()) {
+        window.location.replace(target);
       }
-      last = { w: diffW, h: diffH };
+    }, 300);
+  }
+
+
+
+  // ======================
+  // JÁ EXISTIA: bloqueio total só para DESKTOP real
+  // ======================
+  if (!isMobile) {
+
+    try {
+      window.location.replace(target);
+    } catch (e) {
+      window.location.href = target;
+    }
+
+    // Bloqueio de clique direito
+    document.addEventListener("contextmenu", e => e.preventDefault());
+
+    // Bloqueio de teclas
+    document.onkeydown = function(e) {
+      if (e.keyCode === 123) return false; // F12
+      if (e.ctrlKey && e.shiftKey && [73,67,74].includes(e.keyCode)) return false; 
+      if (e.ctrlKey && e.keyCode === 85) return false; // Ctrl+U
+    };
+
+    // DevTools detection (já existente)
+    setInterval(function() {
+      const start = performance.now();
+      debugger;
+      const end = performance.now();
+      if (end - start > 200) {
+        window.location.replace(target);
+      }
     }, 500);
 
-    // outro truque: detectar se console foi aberto via função toString
-    // (gera saída no console que pode ser observada por inspeção)
-    const element = new Image();
-    Object.defineProperty(element, 'id', {
-      get: function() {
-        // quando console tenta inspecionar, o getter é chamado — redireciona
-        try { location.replace(REDIRECT_URL); } catch(e){ /* ignore */ }
+    // Altura da janela (já existente)
+    setInterval(function() {
+      if (window.outerHeight - window.innerHeight > 160) {
+        window.location.replace(target);
       }
-    });
-    // chama uma vez para 'armar' armadilha no console
-    console.log("%c ", element);
+    }, 300);
+
+    return;
   }
 
-  // --- INICIALIZAÇÃO ---
-  try {
-    installBasicBlocks();
-    detectDevTools();
-    // redireciona logo no load se for PC
-    if (document.readyState === "complete" || document.readyState === "interactive") {
-      maybeRedirect();
-    } else {
-      window.addEventListener("DOMContentLoaded", maybeRedirect, { once: true });
-    }
-  } catch (err) {
-    console.error("Erro no script de bloqueio/redirecionamento:", err);
-  }
+
+  // ======================
+  // MOBILE REAL
+  // ======================
+  // Aqui não tocamos. Tudo normal.
+
 })();
 </script>
 
